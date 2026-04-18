@@ -150,6 +150,12 @@ const Navbar = () => {
             <div className="text-sm text-gray-600">
               The LNM Institute of Information Technology
             </div>
+            <Link
+              to="/"
+              className="mt-2 inline-flex items-center text-sm font-medium text-[#8B0000] hover:underline"
+            >
+              ← Back to Main Portal
+            </Link>
           </div>
 
           <div className="relative hidden items-center gap-2 lg:flex">
@@ -237,6 +243,13 @@ const Navbar = () => {
         <AnimatePresence>
           {isOpen && (
             <motion.div className="border-t bg-white shadow-lg lg:hidden">
+              <Link
+                to="/"
+                className="block border-b px-6 py-4 text-sm font-semibold text-[#8B0000]"
+                onClick={() => setIsOpen(false)}
+              >
+                ← Back to Main Portal
+              </Link>
               {navLinks.map((item) => (
                 <div key={item.id} className="border-b">
                   <button

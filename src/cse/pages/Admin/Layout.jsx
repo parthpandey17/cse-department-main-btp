@@ -75,6 +75,12 @@ const Layout = () => {
             <h1 className="text-xl font-bold text-lnmiit-red">
               LNMIIT {deptInfo?.abbr || deptName.toUpperCase()} Admin
             </h1>
+            <Link
+              to="/"
+              className="hidden text-sm font-medium text-[#8B0000] hover:underline md:inline-flex"
+            >
+              ← Main Portal
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-gray-700">Welcome, {user.name}</span>
