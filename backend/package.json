@@ -10,7 +10,9 @@
     "migrate": "node scripts/migrate.js up",
     "migrate:down": "node scripts/migrate.js down",
     "seed": "node scripts/migrate.js seed",
-    "reset": "node scripts/migrate.js reset"
+    "reset": "node scripts/migrate.js reset",
+    "db:patch-import": "node scripts/patch-imported-db.js",
+    "db:check": "node scripts/check-db.js"
   },
   "keywords": [],
   "author": "",
