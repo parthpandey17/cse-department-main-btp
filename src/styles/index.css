@@ -79,7 +79,7 @@ html { scroll-behavior: smooth; }
   flex-shrink: 0;
 }
 .portal-root .logo-img { height: 80px; display: flex; justify-content: center; align-items: center; width: auto; object-fit: contain; }
-.portal-root .nav-links { display: flex; align-items: center; gap: 0; }
+.portal-root .nav-links { display: flex; align-items: center; gap: 12px; }
 .portal-root .nav-btn {
   background: none; border: none; color: var(--ink-2);
   font-family: 'Source Sans 3', sans-serif; font-size: 16px; font-weight: 600;
@@ -162,17 +162,17 @@ html { scroll-behavior: smooth; }
   outline: 3px solid rgba(21,101,192,0.25);
   outline-offset: 4px;
 }
-.portal-root .dept-card.cse::before { background: #1565c0; }
+.portal-root .dept-card.cse::before { background: #a6192e; }
 .portal-root .dept-card.cce::before { background: #6a1b9a; }
 .portal-root .dept-card.me::before  { background: #b71c1c; }
 .portal-root .dept-card.ece::before { background: #1b5e20; }
 .portal-root .dept-icon-wrap { width: 56px; height: 56px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 20px; }
-.portal-root .cse .dept-icon-wrap { background: #e3f0fc; }
+.portal-root .cse .dept-icon-wrap { background: #fdecea; }
 .portal-root .cce .dept-icon-wrap { background: #f3e5f5; }
 .portal-root .me  .dept-icon-wrap { background: #ffebee; }
 .portal-root .ece .dept-icon-wrap { background: #e8f5e9; }
 .portal-root .dept-abbr { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 500; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 6px; }
-.portal-root .cse .dept-abbr { color: #1565c0; }
+.portal-root .cse .dept-abbr { color: #a6192e; }
 .portal-root .cce .dept-abbr { color: #6a1b9a; }
 .portal-root .me  .dept-abbr { color: #b71c1c; }
 .portal-root .ece .dept-abbr { color: #1b5e20; }
