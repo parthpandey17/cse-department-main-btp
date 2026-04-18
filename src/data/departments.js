@@ -11,9 +11,9 @@ export const DEPTS = {
     name: 'Computer Science & Engineering',
     short: 'Computer Science',
     icon: '💻',
-    color: '#1565c0',
-    colorRgb: '21,101,192',
-    tagColor: '#1976d2',
+    color: '#a6192e',
+    colorRgb: '166,25,46',
+    tagColor: '#c62828',
     tags: ['AI/ML', 'Systems', 'Theory'],
     desc: 'Pioneering the frontiers of computation, AI, and software systems that power the digital age.',
     heroDesc:
