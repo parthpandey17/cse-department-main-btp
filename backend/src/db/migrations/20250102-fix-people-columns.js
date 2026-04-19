@@ -2,7 +2,7 @@
 import { DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  const table = "People";
+  const table = "people";
 
   // Helper: safely add column only if not present
   async function addColumnSafe(col, def) {
@@ -38,15 +38,15 @@ export async function up(queryInterface) {
 
   await addColumnSafe("person_type", {
     type: DataTypes.STRING,
-    defaultValue: "Faculty"
+    defaultValue: "Faculty",
   });
 }
 
 export async function down(queryInterface) {
-  const table = "People";
+  const table = "people";
 
   const safeRemove = (col) =>
-    queryInterface.removeColumn(table, col).catch(() => { });
+    queryInterface.removeColumn(table, col).catch(() => {});
 
   await safeRemove("slug");
   await safeRemove("phone");

@@ -1,30 +1,71 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { adminAPI } from "../../lib/api.js";
+import { adminAPI, authAPI } from "../../lib/api.js";
 import { useDepartment } from "../../../department/DepartmentContext";
 
 const Dashboard = () => {
   const { deptInfo, deptPath } = useDepartment();
+  const [user, setUser] = useState(null);
   const [stats, setStats] = useState({
-    sliders: 0, people: 0, programs: 0, news: 0,
-    events: 0, achievements: 0, newsletters: 0, directory: 0,
+    sliders: 0,
+    people: 0,
+    programs: 0,
+    news: 0,
+    events: 0,
+    achievements: 0,
+    newsletters: 0,
+    directory: 0,
   });
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const res = await authAPI.getMe();
+        setUser(res.data.data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (user?.role === "faculty") {
+        setLoading(false);
+        return;
+      }
       try {
-        const [sliders, people, programs, news, events, achievements, newsletters, directory] =
-          await Promise.all([
-            adminAPI.getSliders(), adminAPI.getPeople(), adminAPI.getPrograms(),
-            adminAPI.getNews(), adminAPI.getEvents(), adminAPI.getAchievements(),
-            adminAPI.getNewsletters(), adminAPI.getDirectory(),
-          ]);
+        const [
+          sliders,
+          people,
+          programs,
+          news,
+          events,
+          achievements,
+          newsletters,
+          directory,
+        ] = await Promise.all([
+          adminAPI.getSliders(),
+          adminAPI.getPeople(),
+          adminAPI.getPrograms(),
+          adminAPI.getNews(),
+          adminAPI.getEvents(),
+          adminAPI.getAchievements(),
+          adminAPI.getNewsletters(),
+          adminAPI.getDirectory(),
+        ]);
         setStats({
-          sliders: sliders.data.data.length, people: people.data.data.length,
-          programs: programs.data.data.length, news: news.data.data.length,
-          events: events.data.data.length, achievements: achievements.data.data.length,
-          newsletters: newsletters.data.data.length, directory: directory.data.data.length,
+          sliders: sliders.data.data.length,
+          people: people.data.data.length,
+          programs: programs.data.data.length,
+          news: news.data.data.length,
+          events: events.data.data.length,
+          achievements: achievements.data.data.length,
+          newsletters: newsletters.data.data.length,
+          directory: directory.data.data.length,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -32,24 +73,115 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-    fetchStats();
-  }, []);
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
+
+  if (user?.role === "faculty") {
+    return (
+      <div className="admin-dashboard">
+        <div className="admin-dash-header">
+          <div>
+            <p className="admin-dash-eyebrow">Faculty Portal</p>
+            <h1 className="admin-dash-title">Welcome, {user.name}</h1>
+          </div>
+        </div>
+
+        <div className="admin-qa-grid">
+          <Link
+            to={deptPath(`/admin/people/${user.facultyProfileId}`)}
+            className="admin-qa-btn"
+          >
+            <span className="admin-qa-btn-icon">👤</span>
+            <span className="admin-qa-btn-label">Edit My Profile</span>
+            <span className="admin-qa-btn-arrow">→</span>
+          </Link>
+
+          <Link
+            to={deptPath(`/people/${user.facultyProfile?.slug || ""}`)}
+            className="admin-qa-btn"
+          >
+            <span className="admin-qa-btn-icon">🔎</span>
+            <span className="admin-qa-btn-label">View Public Profile</span>
+            <span className="admin-qa-btn-arrow">→</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const cards = [
-    { title: "Hero Sliders",     count: stats.sliders,      icon: "🖼️",  link: "/admin/sliders",      accent: "#3b82f6", bg: "rgba(59,130,246,0.08)"  },
-    { title: "Faculty Members",  count: stats.people,       icon: "👥",  link: "/admin/people",       accent: "#10b981", bg: "rgba(16,185,129,0.08)"  },
-    { title: "Programs",         count: stats.programs,     icon: "📚",  link: "/admin/programs",     accent: "#8b5cf6", bg: "rgba(139,92,246,0.08)"  },
-    { title: "News Articles",    count: stats.news,         icon: "📰",  link: "/admin/news",         accent: "#f59e0b", bg: "rgba(245,158,11,0.08)"  },
-    { title: "Events",           count: stats.events,       icon: "📅",  link: "/admin/events",       accent: "#ef4444", bg: "rgba(239,68,68,0.08)"   },
-    { title: "Achievements",     count: stats.achievements, icon: "🏆",  link: "/admin/achievements", accent: "#6366f1", bg: "rgba(99,102,241,0.08)"  },
-    { title: "Newsletters",      count: stats.newsletters,  icon: "📄",  link: "/admin/newsletters",  accent: "#ec4899", bg: "rgba(236,72,153,0.08)"  },
-    { title: "Directory Entries",count: stats.directory,    icon: "📞",  link: "/admin/directory",    accent: "#14b8a6", bg: "rgba(20,184,166,0.08)"  },
+    {
+      title: "Hero Sliders",
+      count: stats.sliders,
+      icon: "🖼️",
+      link: "/admin/sliders",
+      accent: "#3b82f6",
+      bg: "rgba(59,130,246,0.08)",
+    },
+    {
+      title: "Faculty Members",
+      count: stats.people,
+      icon: "👥",
+      link: "/admin/people",
+      accent: "#10b981",
+      bg: "rgba(16,185,129,0.08)",
+    },
+    {
+      title: "Programs",
+      count: stats.programs,
+      icon: "📚",
+      link: "/admin/programs",
+      accent: "#8b5cf6",
+      bg: "rgba(139,92,246,0.08)",
+    },
+    {
+      title: "News Articles",
+      count: stats.news,
+      icon: "📰",
+      link: "/admin/news",
+      accent: "#f59e0b",
+      bg: "rgba(245,158,11,0.08)",
+    },
+    {
+      title: "Events",
+      count: stats.events,
+      icon: "📅",
+      link: "/admin/events",
+      accent: "#ef4444",
+      bg: "rgba(239,68,68,0.08)",
+    },
+    {
+      title: "Achievements",
+      count: stats.achievements,
+      icon: "🏆",
+      link: "/admin/achievements",
+      accent: "#6366f1",
+      bg: "rgba(99,102,241,0.08)",
+    },
+    {
+      title: "Newsletters",
+      count: stats.newsletters,
+      icon: "📄",
+      link: "/admin/newsletters",
+      accent: "#ec4899",
+      bg: "rgba(236,72,153,0.08)",
+    },
+    {
+      title: "Directory Entries",
+      count: stats.directory,
+      icon: "📞",
+      link: "/admin/directory",
+      accent: "#14b8a6",
+      bg: "rgba(20,184,166,0.08)",
+    },
   ];
 
   const quickActions = [
-    { label: "Add News Article",   icon: "📰", link: "/admin/news"   },
-    { label: "Add Event",          icon: "📅", link: "/admin/events"  },
-    { label: "Add Faculty Member", icon: "👥", link: "/admin/people"  },
+    { label: "Add News Article", icon: "📰", link: "/admin/news" },
+    { label: "Add Event", icon: "📅", link: "/admin/events" },
+    { label: "Add Faculty Member", icon: "👥", link: "/admin/people" },
   ];
 
   const abbr = deptInfo?.abbr || "Dept";
@@ -63,7 +195,12 @@ const Dashboard = () => {
           <h1 className="admin-dash-title">{abbr} Dashboard</h1>
         </div>
         <div className="admin-dash-date">
-          {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          {new Date().toLocaleDateString("en-IN", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </div>
       </div>
 
@@ -76,7 +213,12 @@ const Dashboard = () => {
       ) : (
         <div className="admin-stat-grid">
           {cards.map((card) => (
-            <Link key={card.title} to={deptPath(card.link)} className="admin-stat-card" style={{ "--card-accent": card.accent, "--card-bg": card.bg }}>
+            <Link
+              key={card.title}
+              to={deptPath(card.link)}
+              className="admin-stat-card"
+              style={{ "--card-accent": card.accent, "--card-bg": card.bg }}
+            >
               <div className="admin-stat-card-top">
                 <div className="admin-stat-icon-wrap">
                   <span className="admin-stat-icon">{card.icon}</span>

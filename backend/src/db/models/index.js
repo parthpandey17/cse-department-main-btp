@@ -1,30 +1,33 @@
 // src/db/models/index.js
-import User from './Users.js';
-import Slider from './Slider.js';
-import People from './People.js';
-import Program from './Program.js';
-import News from './News.js';
-import Event from './Event.js';
-import Achievement from './Achievement.js';
-import Newsletter from './Newsletter.js';
-import DirectoryEntry from './DirectoryEntry.js';
-import InfoBlock from './InfoBlock.js';
-import Research from './Research.js';
-import Facility from './Facility.js';
-import Opportunity from './Opportunity.js';
+import User from "./Users.js";
+import Slider from "./Slider.js";
+import People from "./People.js";
+import Program from "./Program.js";
+import News from "./News.js";
+import Event from "./Event.js";
+import Achievement from "./Achievement.js";
+import Newsletter from "./Newsletter.js";
+import DirectoryEntry from "./DirectoryEntry.js";
+import InfoBlock from "./InfoBlock.js";
+import Research from "./Research.js";
+import Facility from "./Facility.js";
+import Opportunity from "./Opportunity.js";
 import {
   ProgramSection,
   CurriculumSemester,
   CurriculumCourse,
   ProgramOutcome,
-  SectionContent
-} from './ProgramSection.js';
+  SectionContent,
+} from "./ProgramSection.js";
 
-import { sequelize } from '../../config/database.js';
+import { sequelize } from "../../config/database.js";
 
 // Associations
-Program.hasMany(ProgramSection, { foreignKey: 'program_id', as: 'sections' });
-ProgramSection.belongsTo(Program, { foreignKey: 'program_id' });
+Program.hasMany(ProgramSection, { foreignKey: "program_id", as: "sections" });
+ProgramSection.belongsTo(Program, { foreignKey: "program_id" });
+
+User.hasOne(People, { foreignKey: "user_id", as: "facultyProfile" });
+People.belongsTo(User, { foreignKey: "user_id", as: "user" });
 
 // Export all
 export {
@@ -46,5 +49,5 @@ export {
   CurriculumSemester,
   CurriculumCourse,
   ProgramOutcome,
-  SectionContent
+  SectionContent,
 };

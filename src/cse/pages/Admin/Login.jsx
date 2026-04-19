@@ -9,6 +9,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    portal: "admin",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,13 +23,39 @@ const Login = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (loading) return;
+
     setError("");
     setLoading(true);
 
     try {
       const response = await authAPI.login(formData.email, formData.password);
-      localStorage.setItem("token", response.data.data.token);
-      navigate(deptPath("/admin"));
+      const { token, user } = response.data.data;
+
+      if (formData.portal === "admin" && user.role === "faculty") {
+        setError("Please login using Faculty portal");
+        return;
+      }
+
+      if (formData.portal === "faculty" && user.role !== "faculty") {
+        setError("This account is not a faculty account");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      if (user.mustChangePassword) {
+        navigate(deptPath("/admin/change-password"));
+        return;
+      }
+
+      if (user.role === "faculty") {
+        navigate(deptPath(`/admin/people/${user.facultyProfileId}`));
+      } else {
+        navigate(deptPath("/admin"));
+      }
     } catch (err) {
       setError(err.response?.data?.error || "Login failed. Please try again.");
     } finally {
@@ -57,6 +84,21 @@ const Login = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Login As
+              </label>
+              <select
+                name="portal"
+                value={formData.portal}
+                onChange={handleChange}
+                className="input-field"
+              >
+                <option value="admin">Admin</option>
+                <option value="faculty">Faculty</option>
+              </select>
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
                 Email Address

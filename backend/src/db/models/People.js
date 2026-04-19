@@ -9,10 +9,15 @@ const People = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      unique: true,
+    },
     dept: {
-      type: DataTypes.ENUM('cse', 'cce', 'me', 'ece'),
+      type: DataTypes.ENUM("cse", "cce", "me", "ece"),
       allowNull: false,
-     defaultValue: 'cse',
+      defaultValue: "cse",
     },
 
     slug: {
@@ -32,7 +37,7 @@ const People = sequelize.define(
     person_type: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: "Faculty"
+      defaultValue: "Faculty",
     },
 
     email: {
@@ -100,7 +105,7 @@ const People = sequelize.define(
     tableName: "people",
     freezeTableName: true,
     timestamps: true,
-  }
+  },
 );
 
 export default People;

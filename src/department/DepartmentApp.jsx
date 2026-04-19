@@ -9,6 +9,7 @@ import Navbar from "../cse/components/Navbar";
 import Footer from "../cse/components/Footer";
 import Home from "../cse/pages/Home";
 import People from "../cse/pages/People";
+import ChangePassword from "../cse/pages/Admin/ChangePassword";
 import FacultyProfile from "../cse/pages/FacultyProfile";
 import Programs from "../cse/pages/Programs";
 import Newsletter from "../cse/pages/Newsletter";
@@ -108,7 +109,10 @@ export default function DepartmentApp() {
             <Route index element={<Dashboard />} />
             <Route path="sliders" element={<SliderManagement />} />
             <Route path="people" element={<PeopleManagement />} />
+            <Route path="people/:id" element={<PeopleManagement />} />
+            <Route path="change-password" element={<ChangePassword />} />
             <Route path="programs" element={<ProgramsManagement />} />
+
             <Route path="research" element={<ResearchManagement />} />
             <Route path="facilities" element={<FacilitiesManagement />} />
             <Route path="news" element={<NewsManagement />} />

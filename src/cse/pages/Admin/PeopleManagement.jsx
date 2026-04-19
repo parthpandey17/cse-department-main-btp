@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
-import { adminAPI } from "../../lib/api.js";
+import { useEffect, useRef, useState } from "react";
+import { adminAPI, authAPI, publicAPI } from "../../lib/api.js";
 import { useDepartment } from "../../../department/DepartmentContext";
 
 const PeopleManagement = () => {
   const { deptName } = useDepartment();
+  const [user, setUser] = useState(null);
+  const hasAutoOpenedRef = useRef(false);
+
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -22,7 +25,7 @@ const PeopleManagement = () => {
     joining_date: "",
     bio: "",
     order: 0,
-    profile_sections: []
+    profile_sections: [],
   };
 
   const [formData, setFormData] = useState(emptyForm);
@@ -30,24 +33,51 @@ const PeopleManagement = () => {
   const [jsonText, setJsonText] = useState("[]");
   const [jsonError, setJsonError] = useState("");
 
-  useEffect(() => {
-    fetchPeople();
-  }, []);
+  const mapFacultyProfileToPerson = (facultyData) => ({
+    id: facultyData?.id ?? user?.facultyProfileId ?? null,
+    slug: facultyData?.slug ?? "",
+    name: facultyData?.name ?? user?.name ?? "",
+    person_type: facultyData?.person_type ?? "Faculty",
+    designation: facultyData?.designation ?? "",
+    email: facultyData?.email ?? "",
+    phone: facultyData?.phone ?? "",
+    department: facultyData?.department ?? deptName,
+    webpage: facultyData?.webpage ?? "",
+    summary: facultyData?.summary ?? "",
+    research_areas:
+      facultyData?.research_areas ??
+      facultyData?.researchArea ??
+      facultyData?.research_area ??
+      "",
+    joining_date: facultyData?.joining_date ?? "",
+    bio: facultyData?.bio ?? facultyData?.biography ?? "",
+    order: facultyData?.order ?? 0,
+    photo_path: facultyData?.photo_path ?? "",
+    user_id: facultyData?.user_id ?? user?.id ?? null,
+    profile_sections: Array.isArray(facultyData?.profile_sections)
+      ? facultyData.profile_sections
+      : [],
+  });
 
-  // close modal on Escape
-  useEffect(() => {
-    if (!showModal) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") closeModal();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [showModal]);
-
-  const fetchPeople = async () => {
+  const fetchPeople = async (currentUser = user) => {
     try {
-      const res = await adminAPI.getPeople();
-      setPeople(res.data.data);
+      setLoading(true);
+
+      if (currentUser?.role === "faculty") {
+        const slug = currentUser?.facultyProfile?.slug;
+
+        if (!slug) {
+          setPeople([]);
+          return;
+        }
+
+        const res = await publicAPI.getPersonBySlug(slug);
+        const facultyData = res?.data?.data || null;
+        setPeople(facultyData ? [mapFacultyProfileToPerson(facultyData)] : []);
+      } else {
+        const res = await adminAPI.getPeople();
+        setPeople(res.data.data || []);
+      }
     } catch (err) {
       console.error("Fetch error:", err);
       alert("Failed to fetch people");
@@ -55,6 +85,45 @@ const PeopleManagement = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const res = await authAPI.getMe();
+        setUser(res.data.data);
+      } catch (err) {
+        console.error("User fetch failed:", err);
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchPeople(user);
+  }, [user]);
+
+  useEffect(() => {
+    if (
+      user?.role === "faculty" &&
+      people.length === 1 &&
+      !hasAutoOpenedRef.current
+    ) {
+      hasAutoOpenedRef.current = true;
+      openModal(people[0]);
+    }
+  }, [user, people]);
+
+  useEffect(() => {
+    if (!showModal) return;
+
+    const onKey = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showModal]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -89,11 +158,11 @@ const PeopleManagement = () => {
         alert("Person created successfully");
       }
 
-      await fetchPeople();
+      await fetchPeople(user);
       closeModal();
     } catch (error) {
       console.error("Save error:", error);
-      alert("Failed to save person");
+      alert(error.response?.data?.error || "Failed to save person");
     }
   };
 
@@ -102,7 +171,7 @@ const PeopleManagement = () => {
 
     try {
       await adminAPI.deletePerson(id);
-      await fetchPeople();
+      await fetchPeople(user);
     } catch (err) {
       console.error("Delete error:", err);
       alert("Delete failed");
@@ -131,7 +200,7 @@ const PeopleManagement = () => {
         ...emptyForm,
         ...person,
         joining_date: person.joining_date?.split("T")[0] || "",
-        profile_sections: sections
+        profile_sections: sections,
       });
 
       setJsonText(JSON.stringify(sections, null, 2));
@@ -160,9 +229,9 @@ const PeopleManagement = () => {
 
     try {
       const parsed = JSON.parse(value);
-      setFormData({ ...formData, profile_sections: parsed });
+      setFormData((prev) => ({ ...prev, profile_sections: parsed }));
       setJsonError("");
-    } catch (e) {
+    } catch {
       setJsonError("Invalid JSON");
     }
   };
@@ -196,61 +265,52 @@ const PeopleManagement = () => {
 
   return (
     <div>
-
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">People Management</h1>
+        <h1 className="text-3xl font-bold">
+          {user?.role === "faculty" ? "Edit My Profile" : "People Management"}
+        </h1>
 
-        <button onClick={() => openModal()} className="btn-primary">
-          Add Person
-        </button>
+        {user?.role !== "faculty" && (
+          <button onClick={() => openModal()} className="btn-primary">
+            Add Person
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-x-auto">
         <table className="w-full">
-
           <thead className="bg-gray-50">
             <tr>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Photo
               </th>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Name
               </th>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Person Type
               </th>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Designation
               </th>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Email
               </th>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Sections
               </th>
-
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Actions
               </th>
-
             </tr>
           </thead>
 
           <tbody className="divide-y">
-
             {people.map((person) => {
-
               const sectionsCount = getSectionsCount(person);
 
               return (
                 <tr key={person.id}>
-
                   <td className="px-6 py-4">
                     {person.photo_path ? (
                       <img
@@ -266,11 +326,8 @@ const PeopleManagement = () => {
                   </td>
 
                   <td className="px-6 py-4">{person.name}</td>
-
                   <td className="px-6 py-4">{person.person_type}</td>
-
                   <td className="px-6 py-4">{person.designation}</td>
-
                   <td className="px-6 py-4">{person.email}</td>
 
                   <td className="px-6 py-4">
@@ -280,36 +337,77 @@ const PeopleManagement = () => {
                   </td>
 
                   <td className="px-6 py-4 space-x-2">
-
                     <button
-                      onClick={() => openModal(person)}
+                      onClick={() => {
+                        if (
+                          user?.role === "faculty" &&
+                          person.id !== user.facultyProfileId
+                        ) {
+                          alert("You can only edit your own profile");
+                          return;
+                        }
+
+                        openModal(person);
+                      }}
                       className="text-blue-600"
                     >
                       Edit
                     </button>
 
-                    <button
-                      onClick={() => handleDelete(person.id)}
-                      className="text-red-600"
-                    >
-                      Delete
-                    </button>
+                    {user?.role !== "faculty" && !person.user_id && (
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await adminAPI.createFacultyLogin(
+                              person.id,
+                            );
+                            const { email, tempPassword } = res.data.data;
 
+                            alert(
+                              `Faculty login created successfully.\n\nEmail: ${email}\nTemporary Password: ${tempPassword}\n\nPlease copy it now.`,
+                            );
+
+                            await fetchPeople(user);
+                          } catch (err) {
+                            alert(
+                              err.response?.data?.error ||
+                                "Failed to create faculty login",
+                            );
+                          }
+                        }}
+                        className="text-green-600"
+                      >
+                        Generate Login
+                      </button>
+                    )}
+
+                    {user?.role !== "faculty" && (
+                      <button
+                        onClick={() => handleDelete(person.id)}
+                        className="text-red-600"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </td>
-
                 </tr>
               );
             })}
 
+            {people.length === 0 && (
+              <tr>
+                <td className="px-6 py-8 text-center text-gray-500" colSpan="7">
+                  No people found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-
           <div className="bg-white rounded-lg w-full max-w-2xl p-6 overflow-y-auto max-h-[90vh] relative">
-
             <button
               type="button"
               onClick={closeModal}
@@ -324,7 +422,6 @@ const PeopleManagement = () => {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-
               <Input
                 label="Name"
                 value={formData.name}
@@ -336,13 +433,13 @@ const PeopleManagement = () => {
                 <label className="block text-sm font-medium mb-1">
                   Person Type
                 </label>
-
                 <select
                   value={formData.person_type}
                   onChange={(e) =>
                     setFormData({ ...formData, person_type: e.target.value })
                   }
                   className="w-full border rounded px-3 py-2"
+                  disabled={user?.role === "faculty"}
                 >
                   <option value="Faculty">Faculty</option>
                   <option value="Staff">Staff</option>
@@ -354,40 +451,27 @@ const PeopleManagement = () => {
               <Input
                 label="Designation"
                 value={formData.designation}
-                onChange={(v) =>
-                  setFormData({ ...formData, designation: v })
-                }
+                onChange={(v) => setFormData({ ...formData, designation: v })}
               />
 
               <Input
                 label="Email"
                 value={formData.email}
-                onChange={(v) =>
-                  setFormData({ ...formData, email: v })
-                }
+                onChange={(v) => setFormData({ ...formData, email: v })}
               />
 
               <Input
                 label="Phone"
                 value={formData.phone}
-                onChange={(v) =>
-                  setFormData({ ...formData, phone: v })
-                }
+                onChange={(v) => setFormData({ ...formData, phone: v })}
               />
 
-              <Input
-                type="file"
-                label="Photo"
-                onFile={setPhotoFile}
-              />
-
-              {/* NEW PROFILE SECTIONS FIELD */}
+              <Input type="file" label="Photo" onFile={setPhotoFile} />
 
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Profile Sections (JSON)
                 </label>
-
                 <textarea
                   value={jsonText}
                   onChange={(e) => handleJsonChange(e.target.value)}
@@ -401,10 +485,7 @@ const PeopleManagement = () => {
               </div>
 
               <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  className="btn-primary px-4 py-2 flex-1"
-                >
+                <button type="submit" className="btn-primary px-4 py-2 flex-1">
                   {editingPerson ? "Update" : "Create"}
                 </button>
 
@@ -416,14 +497,10 @@ const PeopleManagement = () => {
                   Cancel
                 </button>
               </div>
-
             </form>
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 };

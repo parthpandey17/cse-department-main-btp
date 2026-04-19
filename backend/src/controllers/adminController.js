@@ -11,6 +11,7 @@ import {
   InfoBlock,
   Research,
   Facility,
+  User,
   Opportunity,
   ProgramSection,
   CurriculumSemester,
@@ -21,6 +22,7 @@ import {
 import { Op } from "sequelize";
 import { generateSlug } from "../utils/slugUtils.js";
 import cloudinary from "../config/cloudinary.js";
+import crypto from "crypto";
 
 const safeJSON = (value, fallback = []) => {
   if (value === undefined) return fallback;
@@ -156,6 +158,77 @@ export const getAllPeople = async (req, res, next) => {
       ],
     });
     res.json({ data: people });
+  } catch (error) {
+    next(error);
+  }
+};
+export const createFacultyLogin = async (req, res, next) => {
+  try {
+    const { personId } = req.params;
+
+    const person = await People.findOne({
+      where: {
+        id: personId,
+        dept: req.dept,
+      },
+    });
+
+    if (!person) {
+      return res.status(404).json({ error: "Faculty member not found" });
+    }
+
+    if (!person.email) {
+      return res.status(400).json({
+        error: "Faculty email is required to generate login",
+      });
+    }
+
+    const tempPassword = crypto.randomBytes(4).toString("hex");
+
+    let user = await User.findOne({
+      where: { email: person.email },
+    });
+
+    if (user) {
+      const linkedPerson = await People.findOne({
+        where: { user_id: user.id },
+      });
+
+      if (linkedPerson && linkedPerson.id !== person.id) {
+        return res.status(400).json({
+          error: "This email is already linked to another faculty profile",
+        });
+      }
+
+      await user.update({
+        name: person.name,
+        role: "faculty",
+        password_hash: tempPassword,
+        must_change_password: true,
+      });
+    } else {
+      user = await User.create({
+        name: person.name,
+        email: person.email,
+        password_hash: tempPassword,
+        role: "faculty",
+        must_change_password: true,
+      });
+    }
+
+    await person.update({
+      user_id: user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Faculty login generated successfully",
+      data: {
+        userId: user.id,
+        email: user.email,
+        tempPassword,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -1289,7 +1362,8 @@ export const updateOpportunity = async (req, res, next) => {
       block_type: req.body.block_type ?? opportunity.block_type,
       subtitle: req.body.subtitle ?? opportunity.subtitle,
       description: req.body.description ?? opportunity.description,
-      image_path: req.file?.path || req.body.image_path || opportunity.image_path,
+      image_path:
+        req.file?.path || req.body.image_path || opportunity.image_path,
       cta_text: req.body.cta_text ?? opportunity.cta_text,
       cta_url: req.body.cta_url ?? opportunity.cta_url,
       content_html: req.body.content_html ?? opportunity.content_html,
