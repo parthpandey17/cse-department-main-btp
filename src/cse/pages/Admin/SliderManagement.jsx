@@ -17,6 +17,14 @@ const SliderManagement = () => {
     fetchSliders();
   }, []);
 
+  // close modal on Escape
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
+
   const fetchSliders = async () => {
     try {
       const response = await adminAPI.getSliders();
@@ -150,7 +158,8 @@ const SliderManagement = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto relative">
+            <button type="button" onClick={closeModal} aria-label="Close modal" className="absolute top-3 right-3 text-gray-600 hover:text-gray-900">×</button>
             <h2 className="text-2xl font-bold mb-4">{editingSlider ? 'Edit Slider' : 'Add New Slider'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>

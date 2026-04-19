@@ -6,14 +6,8 @@ import { useDepartment } from "../../../department/DepartmentContext";
 const Dashboard = () => {
   const { deptInfo, deptPath } = useDepartment();
   const [stats, setStats] = useState({
-    sliders: 0,
-    people: 0,
-    programs: 0,
-    news: 0,
-    events: 0,
-    achievements: 0,
-    newsletters: 0,
-    directory: 0,
+    sliders: 0, people: 0, programs: 0, news: 0,
+    events: 0, achievements: 0, newsletters: 0, directory: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -22,25 +16,15 @@ const Dashboard = () => {
       try {
         const [sliders, people, programs, news, events, achievements, newsletters, directory] =
           await Promise.all([
-            adminAPI.getSliders(),
-            adminAPI.getPeople(),
-            adminAPI.getPrograms(),
-            adminAPI.getNews(),
-            adminAPI.getEvents(),
-            adminAPI.getAchievements(),
-            adminAPI.getNewsletters(),
-            adminAPI.getDirectory(),
+            adminAPI.getSliders(), adminAPI.getPeople(), adminAPI.getPrograms(),
+            adminAPI.getNews(), adminAPI.getEvents(), adminAPI.getAchievements(),
+            adminAPI.getNewsletters(), adminAPI.getDirectory(),
           ]);
-
         setStats({
-          sliders: sliders.data.data.length,
-          people: people.data.data.length,
-          programs: programs.data.data.length,
-          news: news.data.data.length,
-          events: events.data.data.length,
-          achievements: achievements.data.data.length,
-          newsletters: newsletters.data.data.length,
-          directory: directory.data.data.length,
+          sliders: sliders.data.data.length, people: people.data.data.length,
+          programs: programs.data.data.length, news: news.data.data.length,
+          events: events.data.data.length, achievements: achievements.data.data.length,
+          newsletters: newsletters.data.data.length, directory: directory.data.data.length,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -48,63 +32,78 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchStats();
   }, []);
 
   const cards = [
-    { title: "Hero Sliders", count: stats.sliders, icon: "🖼️", link: "/admin/sliders", color: "bg-blue-500" },
-    { title: "Faculty Members", count: stats.people, icon: "👥", link: "/admin/people", color: "bg-green-500" },
-    { title: "Programs", count: stats.programs, icon: "📚", link: "/admin/programs", color: "bg-purple-500" },
-    { title: "News Articles", count: stats.news, icon: "📰", link: "/admin/news", color: "bg-yellow-500" },
-    { title: "Events", count: stats.events, icon: "📅", link: "/admin/events", color: "bg-red-500" },
-    { title: "Achievements", count: stats.achievements, icon: "🏆", link: "/admin/achievements", color: "bg-indigo-500" },
-    { title: "Newsletters", count: stats.newsletters, icon: "📄", link: "/admin/newsletters", color: "bg-pink-500" },
-    { title: "Directory Entries", count: stats.directory, icon: "📞", link: "/admin/directory", color: "bg-teal-500" },
+    { title: "Hero Sliders",     count: stats.sliders,      icon: "🖼️",  link: "/admin/sliders",      accent: "#3b82f6", bg: "rgba(59,130,246,0.08)"  },
+    { title: "Faculty Members",  count: stats.people,       icon: "👥",  link: "/admin/people",       accent: "#10b981", bg: "rgba(16,185,129,0.08)"  },
+    { title: "Programs",         count: stats.programs,     icon: "📚",  link: "/admin/programs",     accent: "#8b5cf6", bg: "rgba(139,92,246,0.08)"  },
+    { title: "News Articles",    count: stats.news,         icon: "📰",  link: "/admin/news",         accent: "#f59e0b", bg: "rgba(245,158,11,0.08)"  },
+    { title: "Events",           count: stats.events,       icon: "📅",  link: "/admin/events",       accent: "#ef4444", bg: "rgba(239,68,68,0.08)"   },
+    { title: "Achievements",     count: stats.achievements, icon: "🏆",  link: "/admin/achievements", accent: "#6366f1", bg: "rgba(99,102,241,0.08)"  },
+    { title: "Newsletters",      count: stats.newsletters,  icon: "📄",  link: "/admin/newsletters",  accent: "#ec4899", bg: "rgba(236,72,153,0.08)"  },
+    { title: "Directory Entries",count: stats.directory,    icon: "📞",  link: "/admin/directory",    accent: "#14b8a6", bg: "rgba(20,184,166,0.08)"  },
   ];
 
-  return (
-    <div>
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">
-        {deptInfo?.abbr || "Department"} Dashboard
-      </h1>
+  const quickActions = [
+    { label: "Add News Article",   icon: "📰", link: "/admin/news"   },
+    { label: "Add Event",          icon: "📅", link: "/admin/events"  },
+    { label: "Add Faculty Member", icon: "👥", link: "/admin/people"  },
+  ];
 
+  const abbr = deptInfo?.abbr || "Dept";
+
+  return (
+    <div className="admin-dashboard">
+      {/* Page header */}
+      <div className="admin-dash-header">
+        <div>
+          <p className="admin-dash-eyebrow">Overview</p>
+          <h1 className="admin-dash-title">{abbr} Dashboard</h1>
+        </div>
+        <div className="admin-dash-date">
+          {new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+        </div>
+      </div>
+
+      {/* Stats grid */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-lnmiit-red" />
+        <div className="admin-dash-loading">
+          <div className="admin-dash-spinner" />
+          <span>Loading dashboard…</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="admin-stat-grid">
           {cards.map((card) => (
-            <Link
-              key={card.title}
-              to={deptPath(card.link)}
-              className="rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-xl"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <div className={`${card.color} rounded-lg p-3 text-2xl text-white`}>
-                  {card.icon}
+            <Link key={card.title} to={deptPath(card.link)} className="admin-stat-card" style={{ "--card-accent": card.accent, "--card-bg": card.bg }}>
+              <div className="admin-stat-card-top">
+                <div className="admin-stat-icon-wrap">
+                  <span className="admin-stat-icon">{card.icon}</span>
                 </div>
-                <div className="text-3xl font-bold text-gray-900">{card.count}</div>
+                <div className="admin-stat-count">{card.count}</div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-700">{card.title}</h3>
+              <div className="admin-stat-label">{card.title}</div>
+              <div className="admin-stat-arrow">View all →</div>
             </Link>
           ))}
         </div>
       )}
 
-      <div className="mt-12 rounded-lg bg-white p-6 shadow-md">
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Link to={deptPath("/admin/news")} className="btn-primary text-center">
-            Add News Article
-          </Link>
-          <Link to={deptPath("/admin/events")} className="btn-primary text-center">
-            Add Event
-          </Link>
-          <Link to={deptPath("/admin/people")} className="btn-primary text-center">
-            Add Faculty Member
-          </Link>
+      {/* Quick Actions */}
+      <div className="admin-quick-actions">
+        <div className="admin-qa-header">
+          <h2 className="admin-qa-title">Quick Actions</h2>
+          <p className="admin-qa-sub">Jump straight to the most common tasks</p>
+        </div>
+        <div className="admin-qa-grid">
+          {quickActions.map((a) => (
+            <Link key={a.label} to={deptPath(a.link)} className="admin-qa-btn">
+              <span className="admin-qa-btn-icon">{a.icon}</span>
+              <span className="admin-qa-btn-label">{a.label}</span>
+              <span className="admin-qa-btn-arrow">→</span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

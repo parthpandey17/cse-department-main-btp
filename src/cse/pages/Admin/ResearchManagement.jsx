@@ -40,6 +40,14 @@ export default function ResearchManagement() {
     fetchResearch();
   }, []);
 
+  // close modal on Escape
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
+
   const fetchResearch = async () => {
     try {
       const res = await adminAPI.getResearch();
@@ -184,10 +192,9 @@ export default function ResearchManagement() {
       {/* ================= MODAL ================= */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg w-full max-w-2xl overflow-y-auto max-h-[90vh]">
-            <h2 className="text-2xl font-bold mb-6">
-              {editingResearch ? "Edit Research" : "Add Research"}
-            </h2>
+          <div className="bg-white p-8 rounded-lg w-full max-w-2xl overflow-y-auto max-h-[90vh] relative">
+            <button type="button" onClick={closeModal} aria-label="Close modal" className="absolute top-3 right-3 text-gray-600 hover:text-gray-900">×</button>
+            <h2 className="text-2xl font-bold mb-6">{editingResearch ? "Edit Research" : "Add Research"}</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
@@ -329,16 +336,8 @@ export default function ResearchManagement() {
               />
 
               <div className="flex gap-4 pt-4">
-                <button type="submit" className="btn-primary flex-1">
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="btn-secondary flex-1"
-                >
-                  Cancel
-                </button>
+                <button type="submit" className="btn-primary flex-1">Save</button>
+                <button type="button" onClick={closeModal} className="btn-secondary flex-1">Cancel</button>
               </div>
             </form>
           </div>

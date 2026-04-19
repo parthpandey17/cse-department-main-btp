@@ -26,6 +26,14 @@ const FacilitiesManagement = () => {
     fetchFacilities();
   }, []);
 
+  // close modal on Escape
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
+
   const fetchFacilities = async () => {
     try {
       const response = await adminAPI.getFacilities();
@@ -197,7 +205,8 @@ const FacilitiesManagement = () => {
       {/* MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button type="button" onClick={closeModal} aria-label="Close modal" className="absolute top-3 right-3 text-gray-600 hover:text-gray-900">×</button>
 
             <h2 className="text-2xl font-bold mb-6">
               {editingFacility ? 'Edit Facility' : 'Add Facility'}
@@ -330,16 +339,8 @@ const FacilitiesManagement = () => {
 
               {/* BUTTONS */}
               <div className="flex gap-4 pt-4">
-                <button type="submit" className="btn-primary flex-1">
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="btn-secondary flex-1"
-                >
-                  Cancel
-                </button>
+                <button type="submit" className="btn-primary flex-1">Save</button>
+                <button type="button" onClick={closeModal} className="btn-secondary flex-1">Cancel</button>
               </div>
 
             </form>

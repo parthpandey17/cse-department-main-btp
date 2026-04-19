@@ -34,6 +34,16 @@ const PeopleManagement = () => {
     fetchPeople();
   }, []);
 
+  // close modal on Escape
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showModal]);
+
   const fetchPeople = async () => {
     try {
       const res = await adminAPI.getPeople();
@@ -296,9 +306,18 @@ const PeopleManagement = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 
-          <div className="bg-white rounded-lg w-full max-w-2xl p-6 overflow-y-auto max-h-[90vh]">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 overflow-y-auto max-h-[90vh] relative">
+
+            <button
+              type="button"
+              onClick={closeModal}
+              aria-label="Close modal"
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
+            >
+              ×
+            </button>
 
             <h2 className="text-xl font-bold mb-4">
               {editingPerson ? "Edit Person" : "Add Person"}
@@ -381,9 +400,22 @@ const PeopleManagement = () => {
                 )}
               </div>
 
-              <button className="bg-blue-600 text-white px-4 py-2 rounded">
-                {editingPerson ? "Update" : "Create"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="submit"
+                  className="btn-primary px-4 py-2 flex-1"
+                >
+                  {editingPerson ? "Update" : "Create"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="btn-secondary px-4 py-2 flex-1"
+                >
+                  Cancel
+                </button>
+              </div>
 
             </form>
 

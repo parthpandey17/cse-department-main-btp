@@ -27,6 +27,14 @@ const AchievementsManagement = () => {
     fetchAchievements();
   }, []);
 
+  // close modal on Escape
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
+
   const fetchAchievements = async () => {
     try {
       const response = await adminAPI.getAchievements();
@@ -156,8 +164,9 @@ const AchievementsManagement = () => {
 
       {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-full max-w-xl">
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded w-full max-w-xl relative">
+            <button type="button" onClick={closeModal} aria-label="Close modal" className="absolute top-3 right-3 text-gray-600 hover:text-gray-900">×</button>
 
             <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -230,9 +239,7 @@ const AchievementsManagement = () => {
 
               <div className="flex gap-4">
                 <button className="btn-primary flex-1">Save</button>
-                <button type="button" onClick={closeModal} className="btn-secondary flex-1">
-                  Cancel
-                </button>
+                <button type="button" onClick={closeModal} className="btn-secondary flex-1">Cancel</button>
               </div>
 
             </form>

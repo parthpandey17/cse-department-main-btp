@@ -26,6 +26,14 @@ export default function OpportunitiesManagement() {
     fetchItems();
   }, []);
 
+  // close modal on Escape
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
+
   const fetchItems = async () => {
     try {
       const response = await adminAPI.getOpportunities();
@@ -139,11 +147,10 @@ export default function OpportunitiesManagement() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
-            <h2 className="mb-4 text-xl font-bold">
-              {editingItem ? "Edit Opportunity" : "Add Opportunity"}
-            </h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 relative">
+            <button type="button" onClick={closeModal} aria-label="Close modal" className="absolute top-3 right-3 text-gray-600 hover:text-gray-900">×</button>
+            <h2 className="mb-4 text-xl font-bold">{editingItem ? "Edit Opportunity" : "Add Opportunity"}</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input label="Title" value={formData.title} onChange={(value) => setFormData({ ...formData, title: value })} required />
@@ -189,12 +196,8 @@ export default function OpportunitiesManagement() {
               </label>
 
               <div className="flex gap-3">
-                <button type="submit" className="btn-primary">
-                  {editingItem ? "Update" : "Create"}
-                </button>
-                <button type="button" className="rounded border px-4 py-2" onClick={closeModal}>
-                  Cancel
-                </button>
+                <button type="submit" className="btn-primary">{editingItem ? "Update" : "Create"}</button>
+                <button type="button" onClick={closeModal} className="btn-secondary">Cancel</button>
               </div>
             </form>
           </div>

@@ -6,21 +6,23 @@ const NewsletterManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingNewsletter, setEditingNewsletter] = useState(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    issueDate: '',
-    description: ''
-  });
+  const [formData, setFormData] = useState({ title: '', issueDate: '', description: '' });
   const [pdfFile, setPdfFile] = useState(null);
 
+  useEffect(() => { fetchNewsletters(); }, []);
+
+  // close modal on Escape
   useEffect(() => {
-    fetchNewsletters();
-  }, []);
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
 
   const fetchNewsletters = async () => {
     try {
       const response = await adminAPI.getNewsletters();
-      setNewsletters(response.data.data);
+      setNewsletters(response.data.data || []);
     } catch (error) {
       console.error('Error fetching newsletters:', error);
       alert('Failed to fetch newsletters');
@@ -31,14 +33,9 @@ const NewsletterManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     const data = new FormData();
-    Object.keys(formData).forEach(key => {
-      data.append(key, formData[key]);
-    });
-    if (pdfFile) {
-      data.append('pdf', pdfFile);
-    }
+    Object.keys(formData).forEach((key) => data.append(key, formData[key]));
+    if (pdfFile) data.append('pdf', pdfFile);
 
     try {
       if (editingNewsletter) {
@@ -56,34 +53,13 @@ const NewsletterManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this newsletter?')) return;
-
-    try {
-      await adminAPI.deleteNewsletter(id);
-      alert('Newsletter deleted successfully!');
-      fetchNewsletters();
-    } catch (error) {
-      console.error('Error deleting newsletter:', error);
-      alert('Failed to delete newsletter');
-    }
-  };
-
   const openModal = (newsletter = null) => {
     if (newsletter) {
       setEditingNewsletter(newsletter);
-      setFormData({
-        title: newsletter.title,
-        issueDate: newsletter.issueDate.split('T')[0],
-        description: newsletter.description || ''
-      });
+      setFormData({ title: newsletter.title || '', issueDate: (newsletter.issueDate || '').split('T')[0] || '', description: newsletter.description || '' });
     } else {
       setEditingNewsletter(null);
-      setFormData({
-        title: '',
-        issueDate: '',
-        description: ''
-      });
+      setFormData({ title: '', issueDate: '', description: '' });
     }
     setPdfFile(null);
     setShowModal(true);
@@ -92,33 +68,34 @@ const NewsletterManagement = () => {
   const closeModal = () => {
     setShowModal(false);
     setEditingNewsletter(null);
-    setFormData({
-      title: '',
-      issueDate: '',
-      description: ''
-    });
+    setFormData({ title: '', issueDate: '', description: '' });
     setPdfFile(null);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this newsletter?')) return;
+    try {
+      await adminAPI.deleteNewsletter(id);
+      fetchNewsletters();
+    } catch (err) {
+      console.error('Delete failed', err);
+      alert('Delete failed');
+    }
   };
 
-  if (loading) {
-    return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lnmiit-red"></div></div>;
-  }
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch { return dateString; }
+  };
+
+  if (loading) return <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lnmiit-red"></div></div>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Newsletters</h1>
-        <button onClick={() => openModal()} className="btn-primary">
-          Add Newsletter
-        </button>
+        <button onClick={() => openModal()} className="btn-primary">Add Newsletter</button>
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -136,11 +113,7 @@ const NewsletterManagement = () => {
               <tr key={newsletter.id}>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900">{newsletter.title}</td>
                 <td className="px-6 py-4 text-sm text-gray-900">{formatDate(newsletter.issueDate)}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  <a href={newsletter.pdf_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                    View PDF
-                  </a>
-                </td>
+                <td className="px-6 py-4 text-sm text-gray-900"><a href={newsletter.pdf_path} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View PDF</a></td>
                 <td className="px-6 py-4 text-sm space-x-2">
                   <button onClick={() => openModal(newsletter)} className="text-blue-600 hover:underline">Edit</button>
                   <button onClick={() => handleDelete(newsletter.id)} className="text-red-600 hover:underline">Delete</button>
@@ -154,47 +127,25 @@ const NewsletterManagement = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto relative">
+            <button type="button" onClick={closeModal} aria-label="Close modal" className="absolute top-3 right-3 text-gray-600 hover:text-gray-900">×</button>
             <h2 className="text-2xl font-bold mb-4">{editingNewsletter ? 'Edit Newsletter' : 'Add Newsletter'}</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  required
-                  className="input-field"
-                />
+                <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} required className="input-field" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Issue Date *</label>
-                <input
-                  type="date"
-                  value={formData.issueDate}
-                  onChange={(e) => setFormData({...formData, issueDate: e.target.value})}
-                  required
-                  className="input-field"
-                />
+                <input type="date" value={formData.issueDate} onChange={(e) => setFormData({...formData, issueDate: e.target.value})} required className="input-field" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={3}
-                  className="input-field"
-                />
+                <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows={3} className="input-field" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">PDF File {!editingNewsletter && '*'}</label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setPdfFile(e.target.files[0])}
-                  required={!editingNewsletter}
-                  className="input-field"
-                />
+                <input type="file" accept="application/pdf" onChange={(e) => setPdfFile(e.target.files[0])} required={!editingNewsletter} className="input-field" />
               </div>
               <div className="flex space-x-4">
                 <button type="submit" className="btn-primary flex-1">Save</button>

@@ -6,19 +6,47 @@ import NewsCard from "../components/NewsCard.jsx";
 import EventCard from "../components/EventCard.jsx";
 import AchievementCard from "../components/AchievementCard.jsx";
 import Loading from "../components/Loading.jsx";
-import SectionHeader from "../components/common/SectionHeader.jsx";
 import PageWrapper from "../components/common/PageWrapper.jsx";
 import { publicAPI } from "../lib/api.js";
 import { useDepartment } from "../../department/DepartmentContext";
 
+/* ── Reusable section heading ── */
+const SectionHeading = ({ eyebrow, title, subtitle, linkTo, linkLabel }) => (
+  <div className="home-section-heading">
+    {eyebrow && <p className="home-eyebrow">{eyebrow}</p>}
+    <h2 className="home-section-title">{title}</h2>
+    {subtitle && <p className="home-section-subtitle">{subtitle}</p>}
+    <div className="home-section-rule" />
+    {linkTo && (
+      <Link to={linkTo} className="home-view-all dept-link">
+        {linkLabel || "View All"} →
+      </Link>
+    )}
+  </div>
+);
+
+const stats = [
+  { num: "50+",  label: "Faculty Members",       icon: "👨‍🏫" },
+  { num: "800+", label: "Students",               icon: "🎓" },
+  { num: "100+", label: "Research Publications",  icon: "📄" },
+  { num: "95%",  label: "Placement Rate",         icon: "🏆" },
+];
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 28 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.6, ease: "easeOut", delay },
+});
+
 const Home = () => {
   const { deptName, deptPath } = useDepartment();
-  const [sliders, setSliders] = useState([]);
-  const [news, setNews] = useState([]);
-  const [events, setEvents] = useState([]);
+  const [sliders, setSliders]         = useState([]);
+  const [news, setNews]               = useState([]);
+  const [events, setEvents]           = useState([]);
   const [achievements, setAchievements] = useState([]);
-  const [aboutInfo, setAboutInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [aboutInfo, setAboutInfo]     = useState(null);
+  const [loading, setLoading]         = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,19 +59,17 @@ const Home = () => {
             publicAPI.getAchievements({ limit: 3 }),
             publicAPI.getInfoBlock("about_department"),
           ]);
-
         setSliders(slidersRes?.data?.data || []);
         setNews(newsRes?.data?.data || []);
         setAchievements(achievementsRes?.data?.data || []);
         setAboutInfo(aboutRes?.data?.data || null);
         setEvents(Array.isArray(eventsRes?.data?.data) ? eventsRes.data.data : []);
-      } catch (error) {
-        console.error("Error fetching home data:", error);
+      } catch (err) {
+        console.error("Error fetching home data:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -51,113 +77,119 @@ const Home = () => {
 
   return (
     <PageWrapper noPadding>
-      <div className="relative min-h-[75vh] w-full overflow-hidden md:min-h-[85vh]">
-        <Slider slides={sliders} />
 
+      {/* ── HERO SLIDER ── */}
+      <div className="home-hero">
+        <Slider slides={sliders} />
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-t from-black/60 via-black/30 to-transparent px-4 text-center"
+          transition={{ duration: 0.9 }}
+          className="home-hero-overlay"
         >
-          <div className="max-w-3xl rounded-3xl border border-white/30 bg-white/10 p-8 shadow-xl backdrop-blur-lg md:p-10">
-            <motion.h1 className="text-4xl font-bold text-white md:text-6xl">
-              Department of {deptName}
-            </motion.h1>
-            <motion.p className="mt-4 text-lg text-gray-200 md:text-xl">
-              The LNM Institute of Information Technology, Jaipur
-            </motion.p>
-            <motion.div className="mt-8 inline-flex">
-              <Link
-                to={deptPath("/programs")}
-                className="rounded-xl bg-gradient-to-r from-[#7D0F22] via-[#A6192E] to-[#C93030] px-6 py-3 font-semibold text-white shadow-lg"
-              >
-                Explore Our Programs →
-              </Link>
-            </motion.div>
+          <div className="home-hero-glass">
+            <p className="home-hero-eyebrow">The LNM Institute of Information Technology, Jaipur</p>
+            <h1 className="home-hero-title">Department of<br />{deptName}</h1>
+            <Link to={deptPath("/programs")} className="home-hero-cta">
+              Explore Our Programs →
+            </Link>
           </div>
         </motion.div>
       </div>
 
+      {/* ── ABOUT ── */}
       {aboutInfo && (
-        <section className="container mx-auto px-4 py-20">
-          <SectionHeader title={aboutInfo.title} />
-          <motion.p className="mx-auto max-w-4xl text-justify text-lg leading-relaxed text-gray-700">
-            {aboutInfo.body}
-          </motion.p>
+        <section className="home-section home-section--white">
+          <div className="home-container">
+            <SectionHeading eyebrow="Who We Are" title={aboutInfo.title} />
+            <motion.p {...fadeUp(0.1)} className="home-about-body">
+              {aboutInfo.body}
+            </motion.p>
+          </div>
         </section>
       )}
 
-      <section className="dept-highlight-strip py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 gap-6 text-white sm:grid-cols-2 md:grid-cols-4">
-            <div className="rounded-xl bg-white/10 p-6 text-center shadow-lg backdrop-blur-md">
-              <h3 className="text-4xl font-bold">50+</h3>
-              <p className="mt-2 text-sm uppercase tracking-wide">Faculty Members</p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-6 text-center shadow-lg backdrop-blur-md">
-              <h3 className="text-4xl font-bold">800+</h3>
-              <p className="mt-2 text-sm uppercase tracking-wide">Students</p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-6 text-center shadow-lg backdrop-blur-md">
-              <h3 className="text-4xl font-bold">100+</h3>
-              <p className="mt-2 text-sm uppercase tracking-wide">Research Publications</p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-6 text-center shadow-lg backdrop-blur-md">
-              <h3 className="text-4xl font-bold">95%</h3>
-              <p className="mt-2 text-sm uppercase tracking-wide">Placement Rate</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="container mx-auto px-4 py-20">
-        <div className="mb-10 text-center">
-          <SectionHeader title="Latest News" />
-          <Link to={deptPath("/news")} className="dept-link mt-2 inline-flex hover:underline">
-            View All →
-          </Link>
-        </div>
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3">
-          {news.map((item) => (
-            <NewsCard key={item.id} news={item} />
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-gray-50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 text-center">
-            <SectionHeader title="Upcoming Events" />
-            <Link to={deptPath("/events")} className="dept-link mt-2 inline-flex hover:underline">
-              View All →
-            </Link>
-          </div>
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
+      {/* ── STATS ── */}
+      <section className="home-stats-strip dept-highlight-strip">
+        <div className="home-container">
+          <div className="home-stats-grid">
+            {stats.map((s, i) => (
+              <motion.div key={i} {...fadeUp(i * 0.1)} className="home-stat-item">
+                <span className="home-stat-icon">{s.icon}</span>
+                <span className="home-stat-num">{s.num}</span>
+                <span className="home-stat-label">{s.label}</span>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-20">
-        <div className="mb-10 text-center">
-          <SectionHeader title="Achievements" />
-          <Link
-            to={deptPath("/achievements")}
-            className="dept-link mt-2 inline-flex hover:underline"
-          >
-            View All →
-          </Link>
-        </div>
+      {/* ── LATEST NEWS ── */}
+      {news.length > 0 && (
+        <section className="home-section home-section--white">
+          <div className="home-container">
+            <SectionHeading
+              eyebrow="Stay Updated"
+              title="Latest News"
+              subtitle="Recent highlights and announcements from the department."
+              linkTo={deptPath("/news")}
+              linkLabel="View All News"
+            />
+            <div className="home-cards-grid">
+              {news.map((item, i) => (
+                <motion.div key={item.id} {...fadeUp(i * 0.1)}>
+                  <NewsCard news={item} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3">
-          {achievements.map((achievement) => (
-            <AchievementCard key={achievement.id} achievement={achievement} />
-          ))}
-        </div>
-      </section>
+      {/* ── UPCOMING EVENTS ── */}
+      {events.length > 0 && (
+        <section className="home-section home-section--gray">
+          <div className="home-container">
+            <SectionHeading
+              eyebrow="Mark Your Calendar"
+              title="Upcoming Events"
+              subtitle="Conferences, workshops, and seminars happening at the department."
+              linkTo={deptPath("/events")}
+              linkLabel="View All Events"
+            />
+            <div className="home-cards-grid">
+              {events.map((event, i) => (
+                <motion.div key={event.id} {...fadeUp(i * 0.1)}>
+                  <EventCard event={event} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── ACHIEVEMENTS ── */}
+      {achievements.length > 0 && (
+        <section className="home-section home-section--white">
+          <div className="home-container">
+            <SectionHeading
+              eyebrow="Pride of the Department"
+              title="Achievements"
+              subtitle="Celebrating the milestones and accolades of our students and faculty."
+              linkTo={deptPath("/achievements")}
+              linkLabel="View All Achievements"
+            />
+            <div className="home-cards-grid">
+              {achievements.map((a, i) => (
+                <motion.div key={a.id} {...fadeUp(i * 0.1)}>
+                  <AchievementCard achievement={a} />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
     </PageWrapper>
   );
 };
